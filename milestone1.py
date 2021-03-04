@@ -5,6 +5,7 @@ from sklearn import preprocessing
 import numpy as np
 import logging
 import random
+import time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,6 +19,7 @@ class Test:
         self.prefix = '/sift1b/binary_128d_'
         self.suffix = '.npy'
         self.nvec = 5000
+        self.insert_cost = 0
 
     def test(self):
         try:
@@ -51,15 +53,16 @@ class Test:
             entities = [
                 {"name": self.fname, "type": DataType.FLOAT_VECTOR, "values": array[0:self.nvec][:].tolist()}]
             logging.debug(f'before insert')
+            begin = time.time()
             self.client.insert(self.cname, entities)
+            self.insert_cost = time.time() - begin
             logging.info(f'after insert file: {filename}')
             logging.debug(f'before flush: {self.cname}')
             self.client.flush([self.cname])
             logging.info(f'after flush')
             stats = self.client.get_collection_stats(self.cname)
             logging.debug(stats)
-            # TODO: remove str() conversion
-            assert stats["row_count"] == str(self.nvec)
+            assert stats["row_count"] == self.nvec
             logging.info(f'step 2 complete')
 
             # step 3 create index
@@ -93,7 +96,10 @@ class Test:
         except AssertionError as ae:
             logging.exception(ae)
         except Exception as e:
-            print(f'test failed: {e}')
+            logging.error(f'test failed: {e}')
+        finally:
+            if self.insert_cost > 0:
+                logging.info(f'insert speed: {self.nvec / self.insert_cost} vector per second')
         return False
 
 
