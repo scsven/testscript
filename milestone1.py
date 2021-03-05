@@ -16,7 +16,7 @@ class Test:
         self.fname = "feature"
         self.dim = 128
         self.client = Milvus("localhost", 19530)
-        self.prefix = '/test/milvus/raw_data/sift1b/binary_128d_'
+        self.prefix = '/sift1b/binary_128d_'
         self.suffix = '.npy'
         self.nvec = 5000
         self.insert_cost = 0
