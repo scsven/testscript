@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 def main():
     print(f"Run on pymilvus v{__version__}")
     test = Test(100 * 10000)
-    test.run()
+    print(test.run())
 
 
 if __name__ == "__main__":

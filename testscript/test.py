@@ -3,6 +3,7 @@ from sklearn import preprocessing
 import numpy as np
 import logging
 import random
+import time
 
 
 class Test:
@@ -18,9 +19,12 @@ class Test:
         self.insert_bulk_size = 5000
         self.nvec = nvec
         self.insert_cost = 0
+        self.create_index_cost = 0
+        self.search_cost = 0
         assert self.nvec >= self.insert_bulk_size & self.nvec % self.insert_bulk_size == 0
 
     def run(self):
+        report = dict()
         try:
             # step 1 create collection
             logging.info(f'step 1 create collection')
@@ -29,12 +33,24 @@ class Test:
 
             # step 2 fill data
             logging.info(f'step 2 fill data')
+            start = time.time()
             self._fill_data()
+            self.insert_cost = time.time() - start
+            report["insert-speed"] = {
+                "value": format(self.nvec / self.insert_cost, ".2f"),
+                "unit": "vec/sec"
+            }
             logging.info(f'step 2 complete')
 
             # step 3 create index
             logging.info(f'step 3 create index')
+            start = time.time()
             self._create_index()
+            self.create_index_cost = time.time() - start
+            report["create-index-cost"] = {
+                "value": format(self.create_index_cost, ".2f"),
+                "unit": "s"
+            }
             logging.info(f'step 3 complete')
 
             # step 4 load
@@ -44,17 +60,23 @@ class Test:
 
             # step 5 search
             logging.info(f'step 5 search')
-            self._search()
+            for nq in [1, 10, 100, 1000]:
+                for topk in [1, 10, 100, 1000]:
+                    for nprobe in [10]:
+                        start = time.time()
+                        self._search(nq=nq, topk=topk, nprobe=nprobe)
+                        self.search_cost = time.time() - start
+                        report[f"search-q{nq}-k{topk}-p{nprobe}-cost"] = {
+                            "value": format(self.search_cost, ".2f"),
+                            "unit": "s"
+                        }
             logging.info(f'step 5 complete')
-            return True
         except AssertionError as ae:
             logging.exception(ae)
         except Exception as e:
             logging.error(f'test failed: {e}')
         finally:
-            if self.insert_cost > 0:
-                logging.info(f'insert speed: {self.nvec / self.insert_cost} vector per second')
-        return False
+            return report
 
     def _create_collection(self):
         logging.debug(f'create_collection() start')
@@ -140,16 +162,16 @@ class Test:
         self.client.load_collection(self.cname)
         logging.debug(f'load_collection() finished')
 
-    def _search(self):
+    def _search(self, nq, topk, nprobe):
         logging.debug(f'search() start')
 
         result = self.client.search(self.cname,
                                     {"bool": {"must": [{"vector": {
                                         self.fname: {
                                             "metric_type": "L2",
-                                            "query": _gen_vectors(10, self.dim),
-                                            "topk": 10,
-                                            "params": {"nprobe": 10}
+                                            "query": _gen_vectors(nq, self.dim),
+                                            "topk": topk,
+                                            "params": {"nprobe": nprobe}
                                         }
                                     }}]}}
                                     )
