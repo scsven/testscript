@@ -16,7 +16,7 @@ class Test:
         self.fname = "feature"
         self.dim = 128
         self.client = Milvus("localhost", 19530)
-        self.prefix = '/sift1b/binary_128d_'
+        self.prefix = '/test/milvus/raw_data/sift1b/binary_128d_'
         self.suffix = '.npy'
         self.nvec = 5000
         self.insert_cost = 0
@@ -84,10 +84,11 @@ class Test:
             logging.info(f'step 5 search')
             result = self.client.search(self.cname,
                                         {"bool": {"must": [{"vector": {
-                                            "Vec": {
+                                            self.fname: {
                                                 "metric_type": "L2",
                                                 "query": gen_vectors(10, self.dim),
-                                                "topk": 10
+                                                "topk": 10,
+                                                "params": {"nprobe": 10}
                                             }
                                         }}]}}
                                         )
