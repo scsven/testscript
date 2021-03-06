@@ -19,11 +19,12 @@ class Test:
         self.insert_bulk_size = 5000
         self.nvec = nvec
         self.insert_cost = 0
+        self.flush_cost = 0
         self.create_index_cost = 0
         self.search_cost = 0
         assert self.nvec >= self.insert_bulk_size & self.nvec % self.insert_bulk_size == 0
 
-    def run(self):
+    def run(self, suite):
         report = dict()
         try:
             # step 1 create collection
@@ -32,9 +33,9 @@ class Test:
             logging.info(f'step 1 complete')
 
             # step 2 fill data
-            logging.info(f'step 2 fill data')
+            logging.info(f'step 2 insert')
             start = time.time()
-            self._fill_data()
+            self._insert()
             self.insert_cost = time.time() - start
             report["insert-speed"] = {
                 "value": format(self.nvec / self.insert_cost, ".2f"),
@@ -42,8 +43,19 @@ class Test:
             }
             logging.info(f'step 2 complete')
 
-            # step 3 create index
-            logging.info(f'step 3 create index')
+            # step 3 flush
+            logging.info(f'step 3 flush')
+            start = time.time()
+            self._flush()
+            self.flush_cost = time.time() - start
+            report["flush-cost"] = {
+                "value": format(self.flush_cost, ".2f"),
+                "unit": "s"
+            }
+            logging.info(f'step 3 complete')
+
+            # step 4 create index
+            logging.info(f'step 4 create index')
             start = time.time()
             self._create_index()
             self.create_index_cost = time.time() - start
@@ -51,18 +63,18 @@ class Test:
                 "value": format(self.create_index_cost, ".2f"),
                 "unit": "s"
             }
-            logging.info(f'step 3 complete')
-
-            # step 4 load
-            logging.info(f'step 4 load')
-            self._load_collection()
             logging.info(f'step 4 complete')
 
-            # step 5 search
-            logging.info(f'step 5 search')
-            for nq in [1, 10, 100, 1000]:
-                for topk in [1, 10, 100, 1000]:
-                    for nprobe in [10]:
+            # step 5 load
+            logging.info(f'step 5 load')
+            self._load_collection()
+            logging.info(f'step 5 complete')
+
+            # step 6 search
+            logging.info(f'step 6 search')
+            for nq in suite["nq"]:
+                for topk in suite["topk"]:
+                    for nprobe in suite["nprobe"]:
                         start = time.time()
                         self._search(nq=nq, topk=topk, nprobe=nprobe)
                         self.search_cost = time.time() - start
@@ -70,7 +82,7 @@ class Test:
                             "value": format(self.search_cost, ".2f"),
                             "unit": "s"
                         }
-            logging.info(f'step 5 complete')
+            logging.info(f'step 6 complete')
         except AssertionError as ae:
             logging.exception(ae)
         except Exception as e:
@@ -102,8 +114,8 @@ class Test:
         assert self.client.has_collection(self.cname)
         logging.debug(f'create_collection() finished')
 
-    def _fill_data(self):
-        logging.debug(f'fill_data() start')
+    def _insert(self):
+        logging.debug(f'insert() start')
 
         count = 0
         for i in range(0, self.maxfiles):
@@ -131,6 +143,10 @@ class Test:
             if count == self.nvec:
                 logging.debug(f'outer break')
                 break
+        logging.debug(f'insert() finished')
+
+    def _flush(self):
+        logging.debug(f'flush() start')
 
         logging.debug(f'before flush: {self.cname}')
         self.client.flush([self.cname])
@@ -140,7 +156,7 @@ class Test:
         logging.debug(stats)
 
         assert stats["row_count"] == self.nvec
-        logging.debug(f'fill_data() finished')
+        logging.debug(f'flush() finished')
 
     def _create_index(self):
         logging.debug(f'create_index() start')
@@ -152,7 +168,6 @@ class Test:
         }
         self.client.create_index(self.cname, self.fname, index_params)
         logging.debug(f'create index {self.cname} : {self.fname} : {index_params}')
-
         logging.debug(f'create_index() finished')
 
     def _load_collection(self):
