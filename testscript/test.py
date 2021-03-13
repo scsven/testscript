@@ -38,7 +38,7 @@ class Test:
             self._insert()
             self.insert_cost = time.time() - start
             report["insert-speed"] = {
-                "value": format(self.nvec / self.insert_cost, ".2f"),
+                "value": format(self.nvec / self.insert_cost, ".4f"),
                 "unit": "vec/sec"
             }
             logging.info(f'step 2 complete')
@@ -49,7 +49,7 @@ class Test:
             self._flush()
             self.flush_cost = time.time() - start
             report["flush-cost"] = {
-                "value": format(self.flush_cost, ".2f"),
+                "value": format(self.flush_cost, ".4f"),
                 "unit": "s"
             }
             logging.info(f'step 3 complete')
@@ -60,7 +60,7 @@ class Test:
             self._create_index()
             self.create_index_cost = time.time() - start
             report["create-index-cost"] = {
-                "value": format(self.create_index_cost, ".2f"),
+                "value": format(self.create_index_cost, ".4f"),
                 "unit": "s"
             }
             logging.info(f'step 4 complete')
@@ -79,7 +79,7 @@ class Test:
                         self._search(nq=nq, topk=topk, nprobe=nprobe)
                         self.search_cost = time.time() - start
                         report[f"search-q{nq}-k{topk}-p{nprobe}-cost"] = {
-                            "value": format(self.search_cost, ".2f"),
+                            "value": format(self.search_cost, ".4f"),
                             "unit": "s"
                         }
             logging.info(f'step 6 complete')

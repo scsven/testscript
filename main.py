@@ -11,9 +11,9 @@ def main(args):
     print(f"Run on pymilvus v{__version__}")
     t = Test(nvec=args.nvec)
     report = Report(t.run(suite={
-        "nq": [1],
-        "topk": [1],
-        "nprobe": [1],
+        "nq": [1,10,100,1000],
+        "topk": [1,10,100,1000],
+        "nprobe": [10],
         }))
     print(report.dump())
     if args.output:
