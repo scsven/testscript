@@ -6,5 +6,5 @@ milestone2:
 	./main.py 1000000 -o milestone2.report
 
 milestone3:
-	./main.py 10000000 -o milestone3.report
+	./main.py 10000000 -d -o milestone3.report
 
