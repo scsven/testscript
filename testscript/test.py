@@ -174,7 +174,7 @@ class Test:
         logging.debug(f'load_collection() start')
 
         logging.debug(f'before load collection: {self.cname}')
-        self.client.load_collection(self.cname)
+        self.client.load_collection(self.cname, timeout=3600)
         logging.debug(f'load_collection() finished')
 
     def _search(self, nq, topk, nprobe):
