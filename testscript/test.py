@@ -16,7 +16,7 @@ class Test:
         self.suffix = '.npy'
         self.vecs_per_file = 100000
         self.maxfiles = 1000
-        self.insert_bulk_size = 5000
+        self.insert_bulk_size = 5000 if nvec == 5000 else 50000
         self.nvec = nvec
         self.insert_cost = 0
         self.flush_cost = 0
