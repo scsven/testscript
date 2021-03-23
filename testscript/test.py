@@ -1,5 +1,6 @@
 from milvus import Milvus, DataType, __version__
 from sklearn import preprocessing
+from . import time_tracker
 import numpy as np
 import logging
 import random
@@ -18,6 +19,7 @@ class Test:
         self.maxfiles = 1000
         self.insert_bulk_size = 5000 if nvec == 5000 else 50000
         self.nvec = nvec
+        self.ntimes = 10
         self.insert_cost = 0
         self.flush_cost = 0
         self.create_index_cost = 0
@@ -72,12 +74,15 @@ class Test:
 
             # step 6 search
             logging.info(f'step 6 search')
+            # warming up
+            self._search(nq=1000, topk=1000, nprobe=10)
             for nq in suite["nq"]:
                 for topk in suite["topk"]:
                     for nprobe in suite["nprobe"]:
                         start = time.time()
-                        self._search(nq=nq, topk=topk, nprobe=nprobe)
-                        self.search_cost = time.time() - start
+                        for i in range(self.ntimes):
+                            self._search(nq=nq, topk=topk, nprobe=nprobe)
+                        self.search_cost = (time.time() - start) / self.ntimes
                         report[f"search-q{nq}-k{topk}-p{nprobe}-cost"] = {
                             "value": format(self.search_cost, ".4f"),
                             "unit": "s"
