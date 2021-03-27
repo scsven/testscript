@@ -56,6 +56,13 @@ class Test:
             }
             logging.info(f'step 3 complete')
 
+            # step 3.5 flush
+            logging.info(f'step 3.5 compact')
+            self.client.compact(self.cname)
+            stats = self.client.get_collection_stats(self.cname)
+            logging.debug(stats)
+            logging.info(f'step 3.5 complete')
+
             # step 4 create index
             logging.info(f'step 4 create index')
             start = time.time()
@@ -65,6 +72,8 @@ class Test:
                 "value": format(self.create_index_cost, ".4f"),
                 "unit": "s"
             }
+            stats = self.client.get_collection_stats(self.cname)
+            logging.debug(stats)
             logging.info(f'step 4 complete')
 
             # step 5 load
@@ -111,8 +120,9 @@ class Test:
                 "type": DataType.FLOAT_VECTOR,
                 "metric_type": "L2",
                 "params": {"dim": self.dim},
-                "indexes": [{"metric_type": "L2"}]
-            }]
+                "indexes": [{"metric_type": "L2"}],
+            }],
+            "segment_row_limit": 2000000,
         })
         logging.info(f'created collection: {self.cname}')
 
